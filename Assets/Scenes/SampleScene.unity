@@ -151,11 +151,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e47803b1ba389c4f89afdf7007d2b88, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cardPrefab: {fileID: 6726651003202954765, guid: 8c2ee3ca8b3d0c741ac08d76fb9223bb, type: 3}
+  cardPrefab: {fileID: 6130281305584722138, guid: fad5ec742e2d5d8429bbcc0547940dc2, type: 3}
   handContainer: {fileID: 1987917854}
   tableContainer: {fileID: 688260801}
-  cardSpacing: 10
-  autoConfigureLayoutGroups: 1
 --- !u!4 &502363956
 Transform:
   m_ObjectHideFlags: 0
@@ -201,11 +199,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   uiManager: {fileID: 502363955}
-  audioManager: {fileID: 0}
-  animationSystem: {fileID: 0}
   matchName: Nueva Partida
-  initialCards: 5
-  tableCards: 4
   numberOfPlayers: 2
 --- !u!4 &682743003
 Transform:
@@ -254,10 +248,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2077873540}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 600, y: 300}
+  m_AnchorMin: {x: 0.5, y: 1}
+  m_AnchorMax: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: -120}
+  m_SizeDelta: {x: 800, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &688260802
 MonoBehaviour:
@@ -583,10 +577,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2077873540}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 100}
-  m_SizeDelta: {x: 0, y: 200}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: 0, y: 120}
+  m_SizeDelta: {x: 800, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1987917855
 MonoBehaviour:
@@ -703,7 +697,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 0
