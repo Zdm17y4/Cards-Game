@@ -104,8 +104,29 @@ public class UIManager : MonoBehaviour
             result = result.Multiply(selectedTableCards[i].Model.Complex);
         }
 
-        // Comparar con la carta de la mano
-        if (selectedHandCard.Model.Complex.Angle == result.Angle)
+        // Redondear ángulo al múltiplo de 30 más cercano
+        int[] validAngles = {0,30,60,90,120,150,180,210,240,270,300,330};
+        int RoundAngle(int angle)
+        {
+            angle = ((angle % 360) + 360) % 360; // Asegura que esté en [0,360)
+            int closest = validAngles[0];
+            int minDiff = Mathf.Abs(angle - closest);
+            foreach (int a in validAngles)
+            {
+                int diff = Mathf.Abs(angle - a);
+                if (diff < minDiff)
+                {
+                    minDiff = diff;
+                    closest = a;
+                }
+            }
+            return closest;
+        }
+
+        int handAngle = RoundAngle(selectedHandCard.Model.Complex.Angle);
+        int resultAngle = RoundAngle(result.Angle);
+
+        if (handAngle == resultAngle)
         {
             // Notificar al GameManager para eliminar cartas de los stacks
             OnCardsMatched?.Invoke(selectedHandCard.Model, selectedTableCards.ConvertAll(c => c.Model));
@@ -121,14 +142,15 @@ public class UIManager : MonoBehaviour
 
             selectedHandCard = null;
             selectedTableCards.Clear();
+
+            Debug.Log($"La multiplicación de complejos coincide");
         }
         else
         {
-            // Feedback visual opcional
-            Debug.Log("No coincide la multiplicación de complejos");
+            Debug.Log($"No coincide la multiplicación ");
         }
     }
-        // Método público para botón en la UI
+    // Método público para botón en la UI
     public void OnPlayButtonClicked()
     {
         TryMatchAndRemove();
