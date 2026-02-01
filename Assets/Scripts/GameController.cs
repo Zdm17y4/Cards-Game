@@ -15,7 +15,7 @@ public class GameController : MonoBehaviour
     {
         if (uiManager == null)
         {
-            Debug.LogError("❌ UIManager no está asignado!");
+            Debug.LogError("UIManager no está asignado!");
             return;
         }
 
@@ -36,7 +36,7 @@ public class GameController : MonoBehaviour
         // Actualizar UI
         UpdateUI();
 
-        Debug.Log($"✅ Juego iniciado: {matchName}");
+        Debug.Log($"Juego iniciado: {matchName}");
     }
 
     void UpdateUI()
@@ -50,7 +50,7 @@ public class GameController : MonoBehaviour
     void OnGUI()
     {
         GUILayout.BeginArea(new Rect(10, 10, 300, 150));
-        GUILayout.Box("🎮 Debug Panel");
+        GUILayout.Box("Debug Panel");
 
         if (gameManager != null && gameManager.State != null)
         {
@@ -60,7 +60,7 @@ public class GameController : MonoBehaviour
             GUILayout.Label($"Cartas en mesa: {gameManager.State.Table.Count}");
             GUILayout.Label($"Cartas en mano: {gameManager.State.Players[0].Hand.Count}");
 
-            if (GUILayout.Button("🔄 Reiniciar"))
+            if (GUILayout.Button("Reiniciar"))
                 InitializeGame();
         }
 

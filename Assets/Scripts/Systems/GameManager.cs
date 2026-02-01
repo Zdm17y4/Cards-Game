@@ -17,8 +17,7 @@ public class GameManager
             CardSuit.Cartesian,
             CardSuit.Polar,
             CardSuit.Graphic,
-            CardSuit.Matrix,
-            CardSuit.ExpMatrix
+            CardSuit.Matrix
         };
 
         foreach (var suit in suits)
