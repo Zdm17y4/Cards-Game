@@ -2,75 +2,55 @@ using System.Collections.Generic;
 
 public class CardStack
 {
-    private LinkedList<Card> cards = new LinkedList<Card>();
-    public string Name { get; set; } 
+    private List<Card> cards = new List<Card>();
+    public string Name { get; set; }
 
-    public CardStack(string name = "Default")
-    {
-        Name = name;
-    }
+    public CardStack(string name = "Stack") { Name = name; }
 
-    // Agregar carta
+    //  Agregar 
     public void Add(Card card)
     {
-        if (card != null)
-            cards.AddLast(card);
+        if (card != null) cards.Add(card);
     }
 
-    // Tomar carta del inicio
-    public Card DrawTop()
+    public void AddRange(IEnumerable<Card> toAdd)
     {
-        if (cards.Count == 0)
-            throw new System.InvalidOperationException($"No hay cartas en {Name}");
-        
-        var card = cards.First.Value;
-        cards.RemoveFirst();
-        return card;
+        foreach (var c in toAdd) Add(c);
     }
 
-    // Intentar tomar carta (sin excepción)
+    //  Sacar cartas 
     public bool TryDrawTop(out Card card)
     {
         card = null;
-        if (cards.Count == 0)
-            return false;
-        
-        card = cards.First.Value;
-        cards.RemoveFirst();
+        if (cards.Count == 0) return false;
+        card = cards[0];
+        cards.RemoveAt(0);
         return true;
     }
 
-    // Mezclar
-    public void Shuffle()
+    // Sacar carta específica 
+    public bool Remove(Card card)
     {
-        List<Card> list = new List<Card>(cards);
-        System.Random rng = new System.Random();
-        int n = list.Count;
-        while (n > 1)
-        {
-            n--;
-            int k = rng.Next(n + 1);
-            Card temp = list[k];
-            list[k] = list[n];
-            list[n] = temp;
-        }
-        
-        cards.Clear();
-        foreach (var card in list)
-            cards.AddLast(card);
+        return cards.Remove(card);
     }
 
-    // Obtener todas las cartas (sin remover)
-    public IEnumerable<Card> GetAll()
-    {
-        return cards;
-    }
-
-    // Limpiar
-    public void Clear()
-    {
-        cards.Clear();
-    }
+    // Leer
+    public IReadOnlyList<Card> GetAll() => cards.AsReadOnly();
 
     public int Count => cards.Count;
+
+    // (Fisher-Yates)
+    public void Shuffle()
+    {
+        var rng = new System.Random();
+        for (int i = cards.Count - 1; i > 0; i--)
+        {
+            int j    = rng.Next(i + 1);
+            var tmp  = cards[i];
+            cards[i] = cards[j];
+            cards[j] = tmp;
+        }
+    }
+
+    public void Clear() => cards.Clear();
 }

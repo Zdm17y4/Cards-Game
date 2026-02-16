@@ -1,158 +1,182 @@
-using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 public class UIManager : MonoBehaviour
 {
+    [Header("Contenedores")]
+    public Transform playerHandContainer;
+    public Transform tableCardsContainer;
+
+    [Header("Prefab")]
     public GameObject cardPrefab;
-    public Transform handContainer;
-    public Transform tableContainer;
 
-    private List<CardView> handCardViews = new List<CardView>();
-    private List<CardView> tableCardViews = new List<CardView>();
+    [Header("Textos")]
+    public TextMeshProUGUI turnInfoText;
+    public TextMeshProUGUI deckCountText;
+    public TextMeshProUGUI score1Text;
+    public TextMeshProUGUI score2Text;
 
-    private CardView selectedHandCard;
-    private List<CardView> selectedTableCards = new List<CardView>();
+    [Header("Paneles")]
+    public GameObject      messagePanel;
+    public TextMeshProUGUI messageText;
+    public GameObject      endPanel;
+    public TextMeshProUGUI endText;
 
+    [Header("Botones")]
+    public Button playButton;
+    public Button passButton;
+    public Button restartButton;
+
+    const float CARD_W = 160f;
+
+    private System.Action       cbPlay, cbPass, cbRestart;
+    private System.Action<Card> cbHandCard, cbTableCard;
+    private List<CardView>      handViews  = new List<CardView>();
+    private List<CardView>      tableViews = new List<CardView>();
+    private CardView            selHand;
+
+    public void Setup(
+        System.Action       onPlay,
+        System.Action       onPass,
+        System.Action       onRestart,
+        System.Action<Card> onHandCard,
+        System.Action<Card> onTableCard)
+    {
+        cbPlay=onPlay; cbPass=onPass; cbRestart=onRestart;
+        cbHandCard=onHandCard; cbTableCard=onTableCard;
+        if (playButton    != null) playButton   .onClick.AddListener(() => cbPlay?   .Invoke());
+        if (passButton    != null) passButton   .onClick.AddListener(() => cbPass?   .Invoke());
+        if (restartButton != null) restartButton.onClick.AddListener(() => cbRestart?.Invoke());
+        if (messagePanel  != null) messagePanel.SetActive(false);
+        if (endPanel      != null) endPanel    .SetActive(false);
+    }
+
+    // ── Mano ──────────────────────────────────────────────────────────────
     public void UpdateHand(Player player)
     {
-        foreach (var obj in handCardViews)
-            if (obj != null) Destroy(obj.gameObject);
-        handCardViews.Clear();
-
-        int index = 0;
-        foreach (var card in player.Hand.GetAll())
+        ClearViews(playerHandContainer, handViews);
+        var cards = player.Hand.GetAll().ToList();
+        int n = cards.Count;
+        for (int i = 0; i < n; i++)
         {
-            GameObject cardObj = Instantiate(cardPrefab, handContainer);
-            RectTransform rt = cardObj.GetComponent<RectTransform>();
-            rt.anchoredPosition = new Vector2((index - 2) * 120, 0);
-            CardView view = cardObj.GetComponent<CardView>();
-            if (view != null)
-            {
-                view.SetCard(card);
-                view.OnCardClicked = OnHandCardClicked;
-            }
-            handCardViews.Add(view);
-            index++;
-        }
-        Debug.Log($"? MANO: {handCardViews.Count} cartas");
-    }
-
-    public void UpdateTable(CardStack table)
-    {
-        foreach (var obj in tableCardViews)
-            if (obj != null) Destroy(obj.gameObject);
-        tableCardViews.Clear();
-
-        int index = 0;
-        foreach (var card in table.GetAll())
-        {
-            GameObject cardObj = Instantiate(cardPrefab, tableContainer);
-            RectTransform rt = cardObj.GetComponent<RectTransform>();
-            rt.anchoredPosition = new Vector2((index - 1.5f) * 120, 0);
-            CardView view = cardObj.GetComponent<CardView>();
-            if (view != null)
-            {
-                view.SetCard(card);
-                view.OnCardClicked = OnTableCardClicked;
-            }
-            tableCardViews.Add(view);
-            index++;
-        }
-        Debug.Log($"? MESA: {tableCardViews.Count} cartas");
-    }
-
-    private void OnHandCardClicked(CardView cardView)
-    {
-        if (selectedHandCard != null)
-            selectedHandCard.SetSelected(false);
-        selectedHandCard = cardView;
-        selectedHandCard.SetSelected(true);
-        // Limpiar selección de mesa
-        foreach (var t in selectedTableCards)
-            t.SetSelected(false);
-        selectedTableCards.Clear();
-    }
-
-    private void OnTableCardClicked(CardView cardView)
-    {
-        if (selectedHandCard == null)
-            return;
-        if (selectedTableCards.Contains(cardView))
-        {
-            cardView.SetSelected(false);
-            selectedTableCards.Remove(cardView);
-        }
-        else
-        {
-            cardView.SetSelected(true);
-            selectedTableCards.Add(cardView);
+            var card = cards[i];
+            var view = SpawnCard(card, playerHandContainer, i, n);
+            Card c   = card;
+            view.OnCardClicked = cv => { SelectHand(cv); cbHandCard?.Invoke(c); };
+            handViews.Add(view);
         }
     }
 
-    // Lógica para verificar y eliminar cartas
-    public System.Action<Card, List<Card>> OnCardsMatched; // Para notificar al GameManager
-
-    public void TryMatchAndRemove()
+    // ── Mesa ───────────────────────────────────────────────────────────────
+    // Ya no necesitamos StackCards — CardView.SetCard detecta IsVirtual y se pinta solo
+    public void UpdateTable(CardStack table, HashSet<Card> _ = null)
     {
-        if (selectedHandCard == null || selectedTableCards.Count == 0)
-            return;
-
-        // Multiplicar los complejos de la mesa
-        ComplexNumber result = selectedTableCards[0].Model.Complex;
-        for (int i = 1; i < selectedTableCards.Count; i++)
+        ClearViews(tableCardsContainer, tableViews);
+        var cards = table.GetAll().ToList();
+        int n = cards.Count;
+        for (int i = 0; i < n; i++)
         {
-            result = result.Multiply(selectedTableCards[i].Model.Complex);
-        }
-
-        // Redondear ángulo al múltiplo de 30 más cercano
-        int[] validAngles = {0,30,60,90,120,150,180,210,240,270,300,330};
-        int RoundAngle(int angle)
-        {
-            angle = ((angle % 360) + 360) % 360; // Asegura que esté en [0,360)
-            int closest = validAngles[0];
-            int minDiff = Mathf.Abs(angle - closest);
-            foreach (int a in validAngles)
-            {
-                int diff = Mathf.Abs(angle - a);
-                if (diff < minDiff)
-                {
-                    minDiff = diff;
-                    closest = a;
-                }
-            }
-            return closest;
-        }
-
-        int handAngle = RoundAngle(selectedHandCard.Model.Complex.Angle);
-        int resultAngle = RoundAngle(result.Angle);
-
-        if (handAngle == resultAngle)
-        {
-            // Notificar al GameManager para eliminar cartas de los stacks
-            OnCardsMatched?.Invoke(selectedHandCard.Model, selectedTableCards.ConvertAll(c => c.Model));
-
-            // Eliminar visualmente
-            Destroy(selectedHandCard.gameObject);
-            foreach (var t in selectedTableCards)
-                Destroy(t.gameObject);
-
-            handCardViews.Remove(selectedHandCard);
-            foreach (var t in selectedTableCards)
-                tableCardViews.Remove(t);
-
-            selectedHandCard = null;
-            selectedTableCards.Clear();
-
-            Debug.Log($"La multiplicación de complejos coincide");
-        }
-        else
-        {
-            Debug.Log($"No coincide la multiplicación ");
+            var card = cards[i];
+            var view = SpawnCard(card, tableCardsContainer, i, n);
+            Card c   = card;
+            view.OnCardClicked = cv => cbTableCard?.Invoke(c);
+            tableViews.Add(view);
         }
     }
-    // Método público para botón en la UI
-    public void OnPlayButtonClicked()
+
+    // ── Info ───────────────────────────────────────────────────────────────
+    public void UpdateInfo(int deckCount, string currentName, List<Player> players)
     {
-        TryMatchAndRemove();
+        if (turnInfoText  != null) turnInfoText.text  = $"Turno: {currentName}";
+        if (deckCountText != null) deckCountText.text = $"Mazo: {deckCount} cartas";
+        if (players != null && players.Count >= 2)
+        {
+            if (score1Text != null) score1Text.text = $"{players[0].Name}: {players[0].Score} pts";
+            if (score2Text != null) score2Text.text = $"{players[1].Name}: {players[1].Score} pts";
+        }
+    }
+
+    // ── Resaltar ───────────────────────────────────────────────────────────
+    public void HighlightPossibleTargets(List<PossiblePlay> plays)
+    {
+        foreach (var tv in tableViews) tv.SetSelected(false);
+        var targets = plays
+            .Where(p => p.Type != PlayType.SimplePlay)
+            .SelectMany(p => p.TableCards).Distinct().ToList();
+        foreach (var tv in tableViews)
+            if (targets.Contains(tv.Model)) tv.SetSelected(true);
+    }
+
+    // ── Mensajes ───────────────────────────────────────────────────────────
+    public void ShowMessage(string msg, bool permanent = false)
+    {
+        if (messageText  != null) messageText.text = msg;
+        if (messagePanel != null) messagePanel.SetActive(true);
+        else if (turnInfoText != null) turnInfoText.text = msg;
+        if (!permanent) StartCoroutine(HideMsg(3f));
+        Debug.Log($"[UI] {msg}");
+    }
+
+    IEnumerator HideMsg(float t)
+    {
+        yield return new WaitForSeconds(t);
+        if (messagePanel != null) messagePanel.SetActive(false);
+    }
+
+    // ── Fin ────────────────────────────────────────────────────────────────
+    public void ShowEndScreen(string msg, List<Player> players)
+    {
+        if (endPanel == null) { ShowMessage(msg, true); return; }
+        endPanel.SetActive(true);
+        if (endText != null)
+        {
+            string full = msg + "\n\n";
+            if (players != null)
+                foreach (var p in players.OrderByDescending(x => x.Score))
+                    full += $"{p.Name}: {p.Score} cartas\n";
+            endText.text = full;
+        }
+    }
+
+    public void HideEndScreen()
+    {
+        if (endPanel != null) endPanel.SetActive(false);
+    }
+
+    // ── SpawnCard centrado ─────────────────────────────────────────────────
+    // Fuerza anchor y pivot al centro para ignorar el layout del padre
+    CardView SpawnCard(Card card, Transform parent, int i, int n)
+    {
+        var go   = Instantiate(cardPrefab, parent);
+        var view = go.GetComponent<CardView>();
+        if (view != null) view.SetCard(card);   // SetCard ya colorea virtual vs normal
+
+        var rt = go.GetComponent<RectTransform>();
+        if (rt != null)
+        {
+            rt.anchorMin        = new Vector2(0.5f, 0.5f);
+            rt.anchorMax        = new Vector2(0.5f, 0.5f);
+            rt.pivot            = new Vector2(0.5f, 0.5f);
+            float offset        = (i - (n - 1) / 2f) * CARD_W;
+            rt.anchoredPosition = new Vector2(offset, 0f);
+        }
+        return view;
+    }
+
+    void ClearViews(Transform parent, List<CardView> list)
+    {
+        foreach (var v in list) if (v != null) Destroy(v.gameObject);
+        list.Clear();
+    }
+
+    void SelectHand(CardView cv)
+    {
+        if (selHand != null) selHand.SetSelected(false);
+        selHand = cv;
+        selHand?.SetSelected(true);
     }
 }

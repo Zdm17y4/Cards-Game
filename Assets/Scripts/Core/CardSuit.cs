@@ -1,7 +1,8 @@
 public enum CardSuit
 {
-    Cartesian,
-    Polar,
-    Graphic,
-    Matrix
+    Cartesian,   
+    Polar,       
+    Graphic,     
+    Matrix,     
+    Complex      
 }

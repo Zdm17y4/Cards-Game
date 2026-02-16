@@ -1,35 +1,37 @@
+// Player.cs  ─  dato puro, SIN MonoBehaviour.
+// Se instancia con: new Player("Nombre", 0, false)
+using System.Collections.Generic;
+
 public class Player
 {
-    public string Name { get; set; }
-    public int SeatNumber { get; set; }
-    public CardStack Hand { get; private set; }
-    public CardStack ScorePile { get; private set; }
-    public int Score { get; set; }
-    public bool IsActive { get; set; }
+    public string    Name       { get; set; }
+    public int       SeatNumber { get; set; }
+    public bool      IsAI       { get; set; }
+    public CardStack Hand       { get; private set; }
+    public CardStack ScorePile  { get; private set; }
+    public int       Score      => ScorePile.Count;
 
-    public Player(string name, int seatNumber = 0)
+    public Player(string name, int seatNumber = 0, bool isAI = false)
     {
-        Name = name;
+        Name       = name;
         SeatNumber = seatNumber;
-        Hand = new CardStack("Hand");
-        ScorePile = new CardStack("Score");
-        Score = 0;
-        IsActive = true;
+        IsAI       = isAI;
+        Hand       = new CardStack($"Mano de {name}");
+        ScorePile  = new CardStack($"Pila de {name}");
     }
 
-    public void AddCardToHand(Card card)
+    public void AddCardToHand(Card card) => Hand.Add(card);
+
+    public void CaptureCards(List<Card> captured)
     {
-        Hand.Add(card);
+        foreach (var c in captured) ScorePile.Add(c);
     }
 
-    public void AddCardToScore(Card card)
-    {
-        ScorePile.Add(card);
-        Score++; // o calcular según tu lógica
-    }
-
-    public void ClearHand()
+    public void Reset()
     {
         Hand.Clear();
+        ScorePile.Clear();
     }
+
+    public override string ToString() => $"{Name} | Mano:{Hand.Count} | Pts:{Score}";
 }
